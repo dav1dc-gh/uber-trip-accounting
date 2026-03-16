@@ -12,13 +12,13 @@
 
 # Uber Trip Accounting
 
-A Python script that processes Uber's CSV trip data export and calculates total spend for a given year, with all amounts converted to Canadian Dollars (CAD).
+A Python script that processes Uber's CSV trip data export and calculates total spend for a given year, with all amounts converted to a target currency (defaults to CAD).
 
 ## Features
 
 - Filters to **completed trips only** (ignores cancelled rides)
 - Processes **one year at a time** via the `--year` flag
-- **Currency-aware**: automatically converts non-CAD trips (USD, GBP, KRW, etc.) to CAD using live exchange rates from [open.er-api.com](https://open.er-api.com) — free, no API key required
+- **Currency-aware**: automatically converts trips to a target currency (default: CAD) using live exchange rates from [open.er-api.com](https://open.er-api.com) — free, no API key required. Use the `--currency` flag to choose any supported currency (USD, EUR, GBP, KRW, etc.)
 - Optional **per-trip summary CSV** output with fare breakdown
 - Built with **pandas** for robust CSV handling that tolerates future column changes in Uber's export format
 
@@ -39,6 +39,9 @@ python3 uber_trip_totals.py --year 2024
 # Use a different CSV file
 python3 uber_trip_totals.py --year 2025 --csv my_trips.csv
 
+# Convert totals to USD instead of CAD
+python3 uber_trip_totals.py --year 2024 --currency USD
+
 # Also write a per-trip summary CSV
 python3 uber_trip_totals.py --year 2024 --output 2024_summary.csv
 ```
@@ -49,6 +52,7 @@ python3 uber_trip_totals.py --year 2024 --output 2024_summary.csv
 |------|----------|---------|-------------|
 | `--year` | Yes | — | Year to process (only completed trips from this year) |
 | `--csv` | No | `trips_data-0.csv` | Path to the Uber trips CSV export |
+| `--currency` | No | `CAD` | Target currency for the total spend calculation |
 | `--output` | No | — | Write a per-trip summary CSV to this path |
 
 ### Example output
@@ -79,7 +83,7 @@ When `--output` is specified, the summary CSV contains:
 | `client_upfront_fare_local` | Post-discount ride total (after Uber One credits, etc.) |
 | `toll_amount_local` | Toll charges (separate from fare) |
 | `trip_cost_local` | Computed trip cost in local currency |
-| `trip_cost_cad` | Computed trip cost converted to CAD |
+| `trip_cost_<currency>` | Computed trip cost converted to target currency (e.g. `trip_cost_cad`, `trip_cost_usd`) |
 
 ## How trip cost is calculated
 
@@ -176,7 +180,7 @@ The corresponding CSV row (line 390) has these relevant fields:
 
 ## Currency conversion
 
-Trips taken outside Canada (e.g. in the US, UK, or South Korea) are recorded in their local currency. The script fetches live exchange rates from [open.er-api.com](https://open.er-api.com) — a free API that requires no API key or authentication — and converts all amounts to CAD for the final total.
+Trips taken in a currency different from the target are converted automatically. The script fetches live exchange rates from [open.er-api.com](https://open.er-api.com) — a free API that requires no API key or authentication — and converts all amounts to the target currency (default: CAD) for the final total.
 
 If a currency cannot be converted (rate not found), those trips are skipped with a warning.
 
